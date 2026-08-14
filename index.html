@@ -203,61 +203,175 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
 </div>
 
 <script>
-(async function(){
+(function(){
 "use strict";
-
-async function loadExternalScript(url, timeoutMs=5000){
-  return new Promise((resolve,reject)=>{
-    const s=document.createElement('script');
-    let settled=false;
-    const finish=(err)=>{
-      if(settled)return;
-      settled=true;
-      clearTimeout(timer);
-      if(err){ try{s.remove()}catch(e){}; reject(err); }
-      else resolve();
-    };
-    const timer=setTimeout(()=>finish(new Error('timeout: '+url)),timeoutMs);
-    s.src=url;
-    s.async=true;
-    s.onload=()=>finish();
-    s.onerror=()=>finish(new Error('load error: '+url));
-    document.head.appendChild(s);
-  });
-}
-
-async function ensureSupabaseLibrary(){
-  if(window.supabase?.createClient)return true;
-  const sources=[
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-    'https://unpkg.com/@supabase/supabase-js@2'
-  ];
-  for(const url of sources){
-    try{
-      const cover=document.getElementById('loadingCover');
-      if(cover)cover.textContent='근무캘린더 연결 중…';
-      await loadExternalScript(url,5000);
-      if(window.supabase?.createClient)return true;
-    }catch(err){
-      console.warn('Supabase library source failed',err);
-    }
-  }
-  return false;
-}
-
-const libReady=await ensureSupabaseLibrary();
-if(!libReady){
-  const cover=document.getElementById('loadingCover');
-  if(cover){
-    cover.innerHTML='<div style="padding:28px;text-align:center;line-height:1.7"><strong style="font-size:18px">연결 파일을 불러오지 못했어요</strong><br><span style="color:#8e8e93;font-size:13px">인터넷 연결을 확인한 뒤 아래 버튼을 눌러주세요.</span><br><button onclick="location.reload()" style="margin-top:16px;border:0;border-radius:14px;padding:12px 18px;background:#0a84ff;color:#fff;font-weight:800">다시 연결</button></div>';
-  }
-  return;
-}
-
 
 const SUPABASE_URL="https://ehfqpuwyjkglmgcwntbo.supabase.co";
 const SUPABASE_KEY="sb_publishable_vIAGJ3qQ56zQLmxUdj5O0A_wrFYBG-x";
-const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const SESSION_KEY='workcalendar_v82_session';
+
+function parseJwt(token){
+  try{
+    const p=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    const s=decodeURIComponent(atob(p).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    return JSON.parse(s);
+  }catch(e){ return {}; }
+}
+function storedSession(){
+  try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null')}catch(e){return null}
+}
+function saveSession(s){
+  if(!s){localStorage.removeItem(SESSION_KEY);return}
+  if(s.access_token){
+    const payload=parseJwt(s.access_token);
+    s.expires_at=payload.exp||Math.floor(Date.now()/1000)+(s.expires_in||3600);
+  }
+  localStorage.setItem(SESSION_KEY,JSON.stringify(s));
+}
+async function authFetch(path,{method='POST',body,token}={}){
+  const headers={'apikey':SUPABASE_KEY,'Content-Type':'application/json'};
+  if(token)headers['Authorization']='Bearer '+token;
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),8000);
+  try{
+    const res=await fetch(SUPABASE_URL+'/auth/v1'+path,{
+      method,headers,body:body===undefined?undefined:JSON.stringify(body),signal:controller.signal
+    });
+    const txt=await res.text();
+    let data={};
+    try{data=txt?JSON.parse(txt):{}}catch(e){data={message:txt}}
+    if(!res.ok) return {data:null,error:{message:data.msg||data.message||data.error_description||('HTTP '+res.status)}};
+    return {data,error:null};
+  }catch(e){
+    return {data:null,error:{message:e.name==='AbortError'?'서버 연결 시간이 초과되었습니다.':e.message}};
+  }finally{clearTimeout(timer)}
+}
+async function refreshSession(session){
+  if(!session?.refresh_token)return null;
+  const {data,error}=await authFetch('/token?grant_type=refresh_token',{body:{refresh_token:session.refresh_token}});
+  if(error||!data?.access_token)return null;
+  const merged={...session,...data,user:data.user||session.user};
+  saveSession(merged);
+  return merged;
+}
+async function validSession(){
+  let s=storedSession();
+  if(!s)return null;
+  const now=Math.floor(Date.now()/1000);
+  if(!s.expires_at || s.expires_at-now<60) s=await refreshSession(s);
+  return s;
+}
+function encodeFilter(v){return encodeURIComponent(String(v))}
+function makeDbBuilder(table){
+  const state={method:'GET',select:'*',filters:[],order:null,body:null,upsert:false,onConflict:null,single:false};
+  const builder={
+    select(cols='*'){state.select=cols;state.method='GET';return builder},
+    eq(col,val){state.filters.push([col,val]);return builder},
+    order(col){state.order=col;return builder},
+    maybeSingle(){state.single=true;return builder},
+    delete(){state.method='DELETE';return builder},
+    upsert(body,opt={}){state.method='POST';state.body=body;state.upsert=true;state.onConflict=opt.onConflict||null;return execute()},
+    then(resolve,reject){return execute().then(resolve,reject)}
+  };
+  async function execute(){
+    const session=await validSession();
+    if(!session)return {data:null,error:{message:'로그인이 필요합니다.'}};
+    let url=SUPABASE_URL+'/rest/v1/'+table;
+    const qs=[];
+    if(state.method==='GET')qs.push('select='+encodeURIComponent(state.select));
+    for(const [c,v] of state.filters)qs.push(encodeURIComponent(c)+'=eq.'+encodeFilter(v));
+    if(state.order)qs.push('order='+encodeURIComponent(state.order)+'.asc');
+    if(state.onConflict)qs.push('on_conflict='+encodeURIComponent(state.onConflict));
+    if(qs.length)url+='?'+qs.join('&');
+    const headers={
+      'apikey':SUPABASE_KEY,
+      'Authorization':'Bearer '+session.access_token,
+      'Content-Type':'application/json'
+    };
+    if(state.method==='POST')headers['Prefer']='resolution=merge-duplicates,return=representation';
+    if(state.method==='DELETE')headers['Prefer']='return=representation';
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),8000);
+    try{
+      const res=await fetch(url,{
+        method:state.method,headers,
+        body:state.body===null?undefined:JSON.stringify(state.body),
+        signal:controller.signal
+      });
+      const txt=await res.text();
+      let data=[];
+      try{data=txt?JSON.parse(txt):[]}catch(e){data=[]}
+      if(res.status===401){
+        const refreshed=await refreshSession(session);
+        if(refreshed){ return retryWith(refreshed); }
+      }
+      if(!res.ok)return {data:null,error:{message:data.message||('HTTP '+res.status)}};
+      if(state.single)data=Array.isArray(data)?(data[0]||null):data;
+      return {data,error:null};
+    }catch(e){
+      return {data:null,error:{message:e.name==='AbortError'?'서버 연결 시간이 초과되었습니다.':e.message}};
+    }finally{clearTimeout(timer)}
+  }
+  async function retryWith(session){
+    let url=SUPABASE_URL+'/rest/v1/'+table;
+    const qs=[];
+    if(state.method==='GET')qs.push('select='+encodeURIComponent(state.select));
+    for(const [c,v] of state.filters)qs.push(encodeURIComponent(c)+'=eq.'+encodeFilter(v));
+    if(state.order)qs.push('order='+encodeURIComponent(state.order)+'.asc');
+    if(state.onConflict)qs.push('on_conflict='+encodeURIComponent(state.onConflict));
+    if(qs.length)url+='?'+qs.join('&');
+    const headers={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+session.access_token,'Content-Type':'application/json'};
+    if(state.method==='POST')headers['Prefer']='resolution=merge-duplicates,return=representation';
+    if(state.method==='DELETE')headers['Prefer']='return=representation';
+    try{
+      const res=await fetch(url,{method:state.method,headers,body:state.body===null?undefined:JSON.stringify(state.body)});
+      const txt=await res.text(); let data=[];
+      try{data=txt?JSON.parse(txt):[]}catch(e){}
+      if(!res.ok)return {data:null,error:{message:data.message||('HTTP '+res.status)}};
+      if(state.single)data=Array.isArray(data)?(data[0]||null):data;
+      return {data,error:null};
+    }catch(e){return {data:null,error:{message:e.message}}}
+  }
+  return builder;
+}
+
+const authListeners=[];
+const sb={
+  auth:{
+    async getSession(){
+      const session=await validSession();
+      return {data:{session},error:null};
+    },
+    async signInWithPassword({email,password}){
+      const {data,error}=await authFetch('/token?grant_type=password',{body:{email,password}});
+      if(error)return {data:null,error};
+      const session={...data,user:data.user};
+      saveSession(session);
+      return {data:{session,user:data.user},error:null};
+    },
+    async signUp({email,password,options}){
+      const body={email,password};
+      if(options?.emailRedirectTo)body.email_redirect_to=options.emailRedirectTo;
+      const {data,error}=await authFetch('/signup',{body});
+      if(error)return {data:null,error};
+      let session=null;
+      if(data.access_token){
+        session={...data,user:data.user};
+        saveSession(session);
+      }
+      return {data:{user:data.user||null,session},error:null};
+    },
+    async signOut(){
+      const s=storedSession();
+      if(s?.access_token)await authFetch('/logout',{body:{},token:s.access_token});
+      saveSession(null);
+      authListeners.forEach(fn=>{try{fn('SIGNED_OUT',null)}catch(e){}});
+      return {error:null};
+    },
+    onAuthStateChange(fn){authListeners.push(fn);return {data:{subscription:{unsubscribe(){}}}}}
+  },
+  from(table){return makeDbBuilder(table)}
+};
 
 const DEFAULT_SETTINGS={
  normalRate:11710,
@@ -803,6 +917,8 @@ async function signOut(){
 
 async function init(){
  buildTimes();
+ $('loadingCover').classList.add('hidden');
+ $('authScreen').classList.remove('hidden');
 
  $('workChoice').onclick=()=>showTimeEditor('work');
  $('holidayChoice').onclick=()=>showTimeEditor('holiday');
@@ -831,7 +947,7 @@ async function init(){
  if(error){
   console.error(error);
   showAuth();
-  $('authMsg').textContent='로그인 상태를 확인하지 못했습니다.';
+  $('authMsg').textContent='로그인 상태 확인에 실패했습니다. 직접 로그인해주세요.';
   return;
  }
 

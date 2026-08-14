@@ -1,4 +1,4 @@
-const CACHE='work-calendar-v8-1-cloud';
+const CACHE='work-calendar-v8-2-direct';
 const STATIC=['./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
