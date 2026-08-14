@@ -12,11 +12,11 @@
 <title>근무캘린더</title>
 <style>
 *{box-sizing:border-box}
-:root{--bg:#000;--panel:#111113;--line:#2c2c2e;--text:#fff;--muted:#8e8e93;--red:#ff453a;--blue:#0a84ff;--green:#30d158;--orange:#ff9f0a}
+:root{--panel:#111113;--line:#2c2c2e;--red:#ff453a;--blue:#0a84ff;--green:#30d158;--orange:#ff9f0a;--muted:#8e8e93}
 html,body{margin:0;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif}
 body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
-.app{max-width:900px;margin:auto;padding-bottom:46px}
-.top{padding:12px 18px 0}.toprow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.app{max-width:900px;margin:auto;padding-bottom:46px}.top{padding:12px 18px 0}
+.toprow{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .pill{border:1px solid #2c2c2e;background:#1c1c1e;color:#fff;border-radius:999px;padding:10px 14px;font-weight:750}
 .circle{border:1px solid #2c2c2e;background:#1c1c1e;color:#fff;border-radius:50%;width:44px;height:44px;font-size:20px}
 .month{font-size:44px;font-weight:850;margin:28px 0 12px}
@@ -28,13 +28,13 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
 .num{display:flex;width:32px;height:32px;border-radius:50%;align-items:center;justify-content:center;font-size:18px;font-weight:650}
 .day.today .num{background:var(--red)}
 .ev{display:block;margin-top:4px;border-radius:6px;padding:4px 5px;font-size:8px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev.normal{background:#12391f;color:#6ce689}.ev.ot{background:#0b2d52;color:#58a6ff}.ev.off{background:#2c2c2e;color:#aeaeb2}
+.ev.normal{background:#12391f;color:#6ce689}.ev.ot{background:#0b2d52;color:#58a6ff}.ev.holiday{background:#4a2500;color:#ffb340}
 .footer{display:flex;justify-content:space-between;align-items:center;padding:18px}
 .panel{margin:14px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:16px}.hidden{display:none}
 .title{font-size:18px;font-weight:850;margin-bottom:12px}
-.choicegrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.choice{border:0;border-radius:16px;padding:16px 10px;font-weight:850;font-size:16px}
-.choice.normal{background:#12391f;color:#78ee92}.choice.ot{background:#0b2d52;color:#72b7ff}
+.choicegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.choice{border:0;border-radius:16px;padding:15px 8px;font-weight:850;font-size:14px}
+.choice.normal{background:#12391f;color:#78ee92}.choice.ot{background:#0b2d52;color:#72b7ff}.choice.holiday{background:#4a2500;color:#ffb340}
 .details{margin-top:12px;background:#1c1c1e;border-radius:14px;padding:12px;line-height:1.55}
 .details strong{display:block;font-size:16px}.details span{display:block;color:#d1d1d6;font-size:13px}
 .small{font-size:11px;color:#8e8e93;line-height:1.5}
@@ -45,7 +45,7 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
 .rows{margin-top:12px}.row{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:10px 0;font-size:13px}.row span{color:#8e8e93}
 .setting{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field{background:#1c1c1e;border-radius:12px;padding:10px}
 .field label{display:block;color:#8e8e93;font-size:11px;margin-bottom:5px}.field input{width:100%;background:#111113;color:#fff;border:1px solid #3a3a3c;border-radius:10px;padding:9px;font:inherit}
-@media(max-width:520px){.day{min-height:108px}.setting{grid-template-columns:1fr}}
+@media(max-width:520px){.day{min-height:108px}.setting{grid-template-columns:1fr}.choice{font-size:12px;padding:14px 4px}}
 </style>
 </head>
 <body>
@@ -53,10 +53,7 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
   <div class="top">
     <div class="toprow">
       <button id="prevYear" class="pill">‹ <span id="yearText"></span></button>
-      <div style="display:flex;gap:8px">
-        <button id="settingsBtn" class="circle">⚙︎</button>
-        <button id="todayAdd" class="circle">＋</button>
-      </div>
+      <div style="display:flex;gap:8px"><button id="settingsBtn" class="circle">⚙︎</button><button id="todayAdd" class="circle">＋</button></div>
     </div>
     <div id="monthTitle" class="month"></div>
   </div>
@@ -74,6 +71,7 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
     <div class="choicegrid">
       <button id="normalChoice" class="choice normal">정상퇴근</button>
       <button id="otChoice" class="choice ot">잔업</button>
+      <button id="holidayChoice" class="choice holiday">공휴일근무</button>
     </div>
     <div id="workDetails" class="details"></div>
     <div class="actions"><button id="deleteBtn" class="del">기록 삭제</button><button id="closeBtn" class="save">완료</button></div>
@@ -84,16 +82,30 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
     <div class="metrics">
       <div class="metric"><span>기본급</span><b id="basePay">0원</b></div>
       <div class="metric"><span>잔업 수당</span><b id="overtimePay">0원</b></div>
+      <div class="metric"><span>공휴일근무 수당</span><b id="holidayPay">0원</b></div>
       <div class="metric"><span>세전 지급액</span><b id="grossPay">0원</b></div>
       <div class="metric"><span>4대보험</span><b id="insurancePay">0원</b></div>
       <div class="metric hero"><span>4대보험 후 예상 수령액</span><b id="netPay">0원</b></div>
     </div>
     <div class="rows">
-      <div class="row"><span>정상퇴근 일수</span><strong id="normalDays">0일</strong></div>
-      <div class="row"><span>잔업 일수</span><strong id="otDays">0일</strong></div>
-      <div class="row"><span>잔업시간</span><strong id="otHours">0시간</strong></div>
+      <div class="row"><span>정상퇴근</span><strong id="normalDays">0일</strong></div>
+      <div class="row"><span>잔업</span><strong id="otDays">0일 / 0시간</strong></div>
+      <div class="row"><span>공휴일근무</span><strong id="holidayDays">0일 / 0시간</strong></div>
     </div>
-    <div class="small" style="margin-top:8px">잔업 1회 = 17:00~20:00 중 휴게 30분 제외 → 2시간 30분 × 잔업시급.</div>
+
+    <div class="title" style="margin-top:20px;margin-bottom:10px">이번 달 총 근무시간</div>
+    <div class="metrics">
+      <div class="metric"><span>총 정상근무시간</span><b id="totalNormalHours">0시간</b></div>
+      <div class="metric"><span>총 잔업근무시간</span><b id="totalOvertimeHours">0시간</b></div>
+      <div class="metric"><span>총 공휴일근무시간</span><b id="totalHolidayHours">0시간</b></div>
+      <div class="metric hero"><span>총 실근무시간</span><b id="totalWorkedHours">0시간</b></div>
+    </div>
+
+    <div class="small" style="margin-top:8px">
+      잔업한 날의 08:00~17:00 정상근무 8시간도 총 정상근무시간에 포함됩니다.<br>
+      잔업 1회 = 2.5시간 × 17,550원 = 43,875원<br>
+      공휴일근무 1회 = 8시간 × 17,550원 = 140,400원
+    </div>
   </section>
 
   <section id="settings" class="panel hidden">
@@ -103,6 +115,8 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
       <div class="field"><label>기본급 인정시간</label><input id="baseHours" type="number" value="209"></div>
       <div class="field"><label>잔업 시급</label><input id="otRate" type="number" value="17550"></div>
       <div class="field"><label>잔업 1회 시간</label><input id="otPerDay" type="number" step="0.5" value="2.5"></div>
+      <div class="field"><label>공휴일근무 시급</label><input id="holidayRate" type="number" value="17550"></div>
+      <div class="field"><label>공휴일근무 1회 시간</label><input id="holidayHoursPerDay" type="number" step="0.5" value="8"></div>
       <div class="field"><label>국민연금</label><input id="pension" type="number" value="145440"></div>
       <div class="field"><label>건강보험</label><input id="health" type="number" value="108980"></div>
       <div class="field"><label>장기요양 비율</label><input id="careRate" type="number" step="0.0000001" value="0.1314047287"></div>
@@ -114,9 +128,15 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
 <script>
 (function(){
 "use strict";
-const REC='workcalendar_simple_v2_records',SET='workcalendar_simple_v2_settings';
-let records=JSON.parse(localStorage.getItem(REC)||'[]');
-let settings=Object.assign({normalRate:11710,baseHours:209,otRate:17550,otPerDay:2.5,pension:145440,health:108980,careRate:.1314047287,employmentRate:.009},JSON.parse(localStorage.getItem(SET)||'{}'));
+const REC='workcalendar_simple_v3_records',SET='workcalendar_simple_v3_settings';
+let oldRecords=[];
+try{oldRecords=JSON.parse(localStorage.getItem('workcalendar_simple_v2_records')||'[]')}catch(e){}
+let records=JSON.parse(localStorage.getItem(REC)||JSON.stringify(oldRecords));
+let settings=Object.assign({
+ normalRate:11710,baseHours:209,otRate:17550,otPerDay:2.5,
+ holidayRate:17550,holidayHoursPerDay:8,
+ pension:145440,health:108980,careRate:.1314047287,employmentRate:.009
+},JSON.parse(localStorage.getItem(SET)||'{}'));
 let view=new Date();view.setDate(1);let selected='';
 const $=id=>document.getElementById(id),pad=n=>String(n).padStart(2,'0');
 const key=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`,monthKey=()=>`${view.getFullYear()}-${pad(view.getMonth()+1)}`;
@@ -129,18 +149,21 @@ function renderCalendar(){
  const now=new Date(),today=key(now.getFullYear(),now.getMonth(),now.getDate());let html='';
  for(let i=0;i<first;i++)html+='<div class="day blank"></div>';
  for(let d=1;d<=last;d++){
-  const ds=key(y,m,d),r=find(ds),dow=new Date(y,m,d).getDay();let cls='day'+(ds===today?' today':'')+((dow===0||dow===6)?' weekend':'');
+  const ds=key(y,m,d),r=find(ds),dow=new Date(y,m,d).getDay();
+  let cls='day'+(ds===today?' today':'')+((dow===0||dow===6)?' weekend':'');
   let ev='';
   if(r?.kind==='normal')ev='<span class="ev normal">정상퇴근 · 8h</span>';
   if(r?.kind==='overtime')ev='<span class="ev normal">정상 · 8h</span><span class="ev ot">잔업 · 2.5h</span>';
+  if(r?.kind==='holiday')ev='<span class="ev holiday">공휴일근무 · 8h</span>';
   html+=`<button class="${cls}" data-date="${ds}"><span class="num">${d}</span>${ev}</button>`;
  }
- $('calendar').innerHTML=html;$('calendar').querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>openEditor(b.dataset.date));
+ $('calendar').innerHTML=html;
+ $('calendar').querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>openEditor(b.dataset.date));
 }
+
 function openEditor(ds){
  selected=ds;$('editor').classList.remove('hidden');$('editTitle').textContent=ds+' 근무 기록';
- renderDetails(find(ds)?.kind||'');
- $('deleteBtn').style.visibility=find(ds)?'visible':'hidden';
+ renderDetails(find(ds)?.kind||'');$('deleteBtn').style.visibility=find(ds)?'visible':'hidden';
  $('editor').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function saveKind(kind){
@@ -148,38 +171,62 @@ function saveKind(kind){
  localStorage.setItem(REC,JSON.stringify(records));renderDetails(kind);$('deleteBtn').style.visibility='visible';renderAll();
 }
 function renderDetails(kind){
- if(kind==='normal') $('workDetails').innerHTML='<strong>정상퇴근</strong><span>08:00 ~ 17:00</span><span>휴게시간 1시간</span><span>실근무 8시간</span>';
- else if(kind==='overtime') $('workDetails').innerHTML='<strong>잔업</strong><span>08:00 ~ 17:00 : 휴게 1시간 → 정상근무 8시간</span><span>17:00 ~ 20:00 : 휴게 30분 → 잔업 2시간 30분</span><span>잔업수당 : 17,550원 × 2.5시간 = 43,875원</span>';
- else $('workDetails').innerHTML='<strong>근무기록을 선택하세요.</strong><span>정상퇴근 또는 잔업을 누르면 바로 저장됩니다.</span>';
+ if(kind==='normal'){
+  $('workDetails').innerHTML='<strong>정상퇴근</strong><span>08:00 ~ 17:00</span><span>휴게시간 1시간</span><span>실근무 8시간</span>';
+ }else if(kind==='overtime'){
+  $('workDetails').innerHTML='<strong>잔업</strong><span>08:00 ~ 17:00 : 휴게 1시간 → 정상근무 8시간</span><span>17:00 ~ 20:00 : 휴게 30분 → 잔업 2시간 30분</span><span>잔업수당 : 17,550원 × 2.5시간 = 43,875원</span>';
+ }else if(kind==='holiday'){
+  $('workDetails').innerHTML='<strong>공휴일근무</strong><span>08:00 ~ 17:00</span><span>휴게시간 1시간</span><span>실근무 8시간</span><span>공휴일근무 수당 : 17,550원 × 8시간 = 140,400원</span>';
+ }else{
+  $('workDetails').innerHTML='<strong>근무기록을 선택하세요.</strong><span>정상퇴근 / 잔업 / 공휴일근무 중 하나를 누르면 바로 저장됩니다.</span>';
+ }
 }
 function remove(){
- if(!selected)return;records=records.filter(r=>r.date!==selected);localStorage.setItem(REC,JSON.stringify(records));$('editor').classList.add('hidden');selected='';renderAll();
+ if(!selected)return;records=records.filter(r=>r.date!==selected);localStorage.setItem(REC,JSON.stringify(records));
+ $('editor').classList.add('hidden');selected='';renderAll();
 }
+
 function calc(){
  const monthRecords=records.filter(r=>r.date.startsWith(monthKey()));
  const normalDays=monthRecords.filter(r=>r.kind==='normal').length;
  const otDays=monthRecords.filter(r=>r.kind==='overtime').length;
+ const holidayDays=monthRecords.filter(r=>r.kind==='holiday').length;
  const otHours=otDays*settings.otPerDay;
+ const holidayHours=holidayDays*settings.holidayHoursPerDay;
+ const totalNormalHours=(normalDays+otDays)*8;
+ const totalWorkedHours=totalNormalHours+otHours+holidayHours;
+
  const base=round10(settings.normalRate*settings.baseHours);
  const overtime=round10(settings.otRate*otHours);
- const gross=base+overtime;
+ const holiday=round10(settings.holidayRate*holidayHours);
+ const gross=base+overtime+holiday;
+
  const care=round10(settings.health*settings.careRate);
  const employment=round10(gross*settings.employmentRate);
  const insurance=round10(settings.pension)+round10(settings.health)+care+employment;
- return{normalDays,otDays,otHours,base,overtime,gross,insurance,net:gross-insurance};
+
+ return{normalDays,otDays,holidayDays,otHours,holidayHours,totalNormalHours,totalWorkedHours,base,overtime,holiday,gross,insurance,net:gross-insurance};
 }
 function renderPay(){
  const c=calc();$('salaryTitle').textContent=(view.getMonth()+1)+'월 급여';
- $('basePay').textContent=won(c.base);$('overtimePay').textContent=won(c.overtime);$('grossPay').textContent=won(c.gross);
- $('insurancePay').textContent='- '+won(c.insurance);$('netPay').textContent=won(c.net);
- $('normalDays').textContent=c.normalDays+'일';$('otDays').textContent=c.otDays+'일';$('otHours').textContent=c.otHours.toFixed(1)+'시간';
+ $('basePay').textContent=won(c.base);$('overtimePay').textContent=won(c.overtime);$('holidayPay').textContent=won(c.holiday);
+ $('grossPay').textContent=won(c.gross);$('insurancePay').textContent='- '+won(c.insurance);$('netPay').textContent=won(c.net);
+ $('normalDays').textContent=c.normalDays+'일';$('otDays').textContent=c.otDays+'일 / '+c.otHours.toFixed(1)+'시간';
+ $('holidayDays').textContent=c.holidayDays+'일 / '+c.holidayHours.toFixed(1)+'시간';
+ $('totalNormalHours').textContent=c.totalNormalHours.toFixed(1)+'시간';
+ $('totalOvertimeHours').textContent=c.otHours.toFixed(1)+'시간';
+ $('totalHolidayHours').textContent=c.holidayHours.toFixed(1)+'시간';
+ $('totalWorkedHours').textContent=c.totalWorkedHours.toFixed(1)+'시간';
 }
 function renderAll(){renderCalendar();renderPay();}
 function loadSettings(){Object.keys(settings).forEach(k=>{if($(k))$(k).value=settings[k]});}
 function saveSettings(){Object.keys(settings).forEach(k=>{if($(k))settings[k]=+$(k).value||0});localStorage.setItem(SET,JSON.stringify(settings));renderPay();}
 
-$('normalChoice').onclick=()=>saveKind('normal');$('otChoice').onclick=()=>saveKind('overtime');
-$('deleteBtn').onclick=remove;$('closeBtn').onclick=()=>{$('editor').classList.add('hidden');selected='';renderCalendar()};
+$('normalChoice').onclick=()=>saveKind('normal');
+$('otChoice').onclick=()=>saveKind('overtime');
+$('holidayChoice').onclick=()=>saveKind('holiday');
+$('deleteBtn').onclick=remove;
+$('closeBtn').onclick=()=>{$('editor').classList.add('hidden');selected='';renderCalendar()};
 $('prevMonth').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);renderAll()};
 $('nextMonth').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);renderAll()};
 $('prevYear').onclick=()=>{view=new Date(view.getFullYear()-1,view.getMonth(),1);renderAll()};
