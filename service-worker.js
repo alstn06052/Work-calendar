@@ -1,4 +1,4 @@
-const CACHE_RESET='work-calendar-v83-reset';
+const CACHE_RESET='work-calendar-v84-reset';
 self.addEventListener('install',event=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil((async()=>{

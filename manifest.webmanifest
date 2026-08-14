@@ -1,7 +1,7 @@
 {
   "name": "근무캘린더",
   "short_name": "근무캘린더",
-  "start_url": "./v83.html",
+  "start_url": "./v84.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
@@ -18,5 +18,5 @@
       "type": "image/png"
     }
   ],
-  "id": "./v83.html"
+  "id": "./v84.html"
 }
