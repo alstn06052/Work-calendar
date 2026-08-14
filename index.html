@@ -50,16 +50,79 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
 .setting{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field{background:#1c1c1e;border-radius:12px;padding:10px}
 .field label{display:block;color:#8e8e93;font-size:11px;margin-bottom:5px}.field input{width:100%;background:#111113;color:#fff;border:1px solid #3a3a3c;border-radius:10px;padding:9px;font:inherit}
 @media(max-width:520px){.day{min-height:108px}.setting{grid-template-columns:1fr}.choice{font-size:12px;padding:14px 4px}}
+
+.authscreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#000}
+.authcard{width:min(440px,100%);background:#111113;border:1px solid #2c2c2e;border-radius:28px;padding:24px}
+.authlogo{width:62px;height:62px;border-radius:16px;background:#ff453a;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:18px}
+.authtitle{font-size:30px;font-weight:900;margin:0 0 7px}
+.authsub{color:#8e8e93;font-size:14px;line-height:1.55;margin-bottom:20px}
+.authfield{margin-top:10px}
+.authfield label{display:block;color:#8e8e93;font-size:12px;margin:0 0 6px 4px}
+.authfield input{width:100%;background:#1c1c1e;color:#fff;border:1px solid #3a3a3c;border-radius:14px;padding:14px;font-size:16px}
+.authbuttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.authbuttons button{border:0;border-radius:14px;padding:14px;font-size:15px;font-weight:850}
+.loginbtn{background:#0a84ff;color:#fff}.signupbtn{background:#1c1c1e;color:#fff;border:1px solid #3a3a3c!important}
+.authmsg{min-height:22px;margin-top:12px;color:#ffb340;font-size:13px;line-height:1.5}
+.userbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 18px 0;padding:10px 12px;background:#111113;border:1px solid #2c2c2e;border-radius:14px}
+.useremail{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#d1d1d6}
+.cloudstatus{font-size:11px;color:#30d158;white-space:nowrap}
+.logout{border:0;background:#2c2c2e;color:#fff;border-radius:10px;padding:8px 10px;font-size:11px;font-weight:800}
+.migrate{margin:14px 12px 0;background:#2a210b;border:1px solid #604b15;border-radius:18px;padding:14px}
+.migrate strong{display:block;color:#ffcc66;margin-bottom:5px}.migrate p{margin:0;color:#d1d1d6;font-size:12px;line-height:1.5}
+.migrate button{margin-top:10px;border:0;background:#ff9f0a;color:#000;border-radius:12px;padding:10px 12px;font-weight:900}
+.syncerror{color:#ff6961!important}
+.loadingcover{position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;font-size:15px;color:#d1d1d6}
+
 </style>
 </head>
 <body>
-<div class="app">
+
+<div id="loadingCover" class="loadingcover">근무캘린더 연결 중…</div>
+
+<div id="authScreen" class="authscreen hidden">
+  <div class="authcard">
+    <div class="authlogo">📅</div>
+    <h1 class="authtitle">근무캘린더</h1>
+    <div class="authsub">계정으로 로그인하면 근무기록과 급여 설정이 서버에 저장되어 아이폰을 바꾸거나 다시 설치해도 불러올 수 있습니다.</div>
+
+    <div class="authfield">
+      <label>이메일</label>
+      <input id="authEmail" type="email" autocomplete="email" placeholder="example@email.com">
+    </div>
+    <div class="authfield">
+      <label>비밀번호</label>
+      <input id="authPassword" type="password" autocomplete="current-password" placeholder="6자 이상">
+    </div>
+
+    <div class="authbuttons">
+      <button id="loginBtn" class="loginbtn">로그인</button>
+      <button id="signupBtn" class="signupbtn">회원가입</button>
+    </div>
+    <div id="authMsg" class="authmsg"></div>
+  </div>
+</div>
+
+<div id="mainApp" class="app hidden">
   <div class="top">
     <div class="toprow">
       <button id="prevYear" class="pill">‹ <span id="yearText"></span></button>
       <div style="display:flex;gap:8px"><button id="settingsBtn" class="circle">⚙︎</button><button id="todayAdd" class="circle">＋</button></div>
     </div>
     <div id="monthTitle" class="month"></div>
+  </div>
+
+  <div class="userbar">
+    <div style="min-width:0">
+      <div id="userEmail" class="useremail"></div>
+      <div id="cloudStatus" class="cloudstatus">☁︎ 서버 연결됨</div>
+    </div>
+    <button id="logoutBtn" class="logout">로그아웃</button>
+  </div>
+
+  <div id="migrationBanner" class="migrate hidden">
+    <strong>기존 V7 기록이 발견됐어요</strong>
+    <p>이 아이폰에 저장돼 있던 기존 근무기록과 급여 설정을 현재 로그인한 계정으로 한 번 가져올 수 있습니다.</p>
+    <button id="importOldBtn">기존 기록 가져오기</button>
   </div>
 
   <div class="week"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
@@ -139,38 +202,33 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
   </section>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
 "use strict";
-const REC='workcalendar_simple_v7_records',SET='workcalendar_simple_v7_settings';
-let migrated=[];
-for(const k of ['workcalendar_simple_v6_records','workcalendar_simple_v5_records','workcalendar_simple_v3_records','workcalendar_simple_v2_records']){
-  try{const a=JSON.parse(localStorage.getItem(k)||'[]');if(a.length){migrated=a;break}}catch(e){}
-}
-function migrateRecord(r){
-  if(r.kind==='normal') return {date:r.date,kind:'work',start:'08:00',end:'17:00'};
-  if(r.kind==='overtime') return {date:r.date,kind:'work',start:'08:00',end:'20:00'};
-  if(r.kind==='holiday' && (!r.start || !r.end)) return {date:r.date,kind:'holiday',start:'08:00',end:'17:00'};
-  return r;
-}
-let records;
-try{records=JSON.parse(localStorage.getItem(REC)||'null')}catch(e){records=null}
-if(!records) records=migrated.map(migrateRecord);
-records=records.map(migrateRecord);
 
-let oldSet={};
-for(const k of ['workcalendar_simple_v6_settings','workcalendar_simple_v5_settings','workcalendar_simple_v3_settings']){
-  try{const s=JSON.parse(localStorage.getItem(k)||'{}');if(Object.keys(s).length){oldSet=s;break}}catch(e){}
-}
-let settings=Object.assign({
- normalRate:11710,baseHours:209,
- pension:145440,health:108980,careRate:.1314047287,employmentRate:.009
-},oldSet,JSON.parse(localStorage.getItem(SET)||'{}'));
+const SUPABASE_URL="https://ehfqpuwyjkglmgcwntbo.supabase.co";
+const SUPABASE_KEY="sb_publishable_vIAGJ3qQ56zQLmxUdj5O0A_wrFYBG-x";
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
+const DEFAULT_SETTINGS={
+ normalRate:11710,
+ baseHours:209,
+ pension:145440,
+ health:108980,
+ careRate:.1314047287,
+ employmentRate:.009
+};
+
+let currentUser=null;
+let records=[];
+let settings={...DEFAULT_SETTINGS};
 let view=new Date(); view.setDate(1);
 let selected='';
 let editMode='work';
-const $=id=>document.getElementById(id),pad=n=>String(n).padStart(2,'0');
+
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
 const key=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
 const monthKey=()=>`${view.getFullYear()}-${pad(view.getMonth()+1)}`;
 const won=n=>Math.round(n||0).toLocaleString('ko-KR')+'원';
@@ -179,17 +237,36 @@ const find=d=>records.find(r=>r.date===d);
 const toMin=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
 const fmtHours=h=>Number.isInteger(h)?h.toFixed(0):h.toFixed(1);
 const premiumRate=()=>settings.normalRate*1.5;
+const trimTime=t=>(t||'').slice(0,5);
+
+function setCloudStatus(text,error=false){
+ const el=$('cloudStatus');
+ if(!el)return;
+ el.textContent=text;
+ el.classList.toggle('syncerror',!!error);
+}
+
+function showAuth(){
+ $('loadingCover').classList.add('hidden');
+ $('mainApp').classList.add('hidden');
+ $('authScreen').classList.remove('hidden');
+ currentUser=null;
+}
+
+function showApp(){
+ $('loadingCover').classList.add('hidden');
+ $('authScreen').classList.add('hidden');
+ $('mainApp').classList.remove('hidden');
+ $('userEmail').textContent=currentUser?.email||'로그인 사용자';
+}
 
 function workParts(r){
  if(!r || r.kind!=='work') return {normal:0,early:0,ot:0};
  const s=toMin(r.start), e=toMin(r.end);
- // Early work: before 08:00, in 30-min increments.
- const early=Math.max(0, Math.floor((Math.min(e,480)-s)/30)*0.5);
- // Normal block: 08:00~17:00 less 1h break, max 8h.
- let overlap=Math.max(0, Math.min(e,1020)-Math.max(s,480));
+ const early=Math.max(0,Math.floor((Math.min(e,480)-s)/30)*0.5);
+ let overlap=Math.max(0,Math.min(e,1020)-Math.max(s,480));
  let normal=Math.max(0,overlap/60-1);
  normal=Math.min(8,Math.floor(normal*2)/2);
- // OT: after 17:00. Once any after-hours work exists, subtract 30m break.
  let post=Math.max(0,e-Math.max(s,1020));
  let ot=Math.max(0,post/60-0.5);
  ot=Math.floor(ot*2)/2;
@@ -198,46 +275,47 @@ function workParts(r){
 
 function holidayHoursFor(r){
  if(!r || r.kind!=='holiday') return 0;
- const s=toMin(r.start||'08:00'), e=toMin(r.end||'17:00');
- if(e<=s) return 0;
-
+ const s=toMin(r.start||'08:00'),e=toMin(r.end||'17:00');
+ if(e<=s)return 0;
  let total=(e-s)/60;
-
- // 08:00~17:00 구간이 포함되면 휴게 1시간 제외
- const dayOverlap=Math.max(0, Math.min(e,1020)-Math.max(s,480));
- if(dayOverlap>0) total-=1;
-
- // 17:00 이후 근무가 있으면 추가 휴게 30분 제외
- if(e>1020 && e>Math.max(s,1020)) total-=0.5;
-
- return Math.max(0, Math.floor(total*2)/2);
+ const dayOverlap=Math.max(0,Math.min(e,1020)-Math.max(s,480));
+ if(dayOverlap>0)total-=1;
+ if(e>1020 && e>Math.max(s,1020))total-=0.5;
+ return Math.max(0,Math.floor(total*2)/2);
 }
 
 function renderCalendar(){
  const y=view.getFullYear(),m=view.getMonth(),first=new Date(y,m,1).getDay(),last=new Date(y,m+1,0).getDate();
- $('yearText').textContent=y+'년'; $('monthTitle').textContent=(m+1)+'월';
- const now=new Date(),today=key(now.getFullYear(),now.getMonth(),now.getDate()); let out='';
- for(let i=0;i<first;i++) out+='<div class="day blank"></div>';
+ $('yearText').textContent=y+'년';
+ $('monthTitle').textContent=(m+1)+'월';
+ const now=new Date(),today=key(now.getFullYear(),now.getMonth(),now.getDate());
+ let out='';
+ for(let i=0;i<first;i++)out+='<div class="day blank"></div>';
+
  for(let d=1;d<=last;d++){
-   const ds=key(y,m,d),r=find(ds),dow=new Date(y,m,d).getDay();
-   let cls='day'+(ds===today?' today':'')+((dow===0||dow===6)?' weekend':'');
-   let ev='';
-   if(r?.kind==='work'){
-      const p=workParts(r);
-      let label='정상출근';
-      if(p.early>0 && p.ot>0) label='조출+잔업';
-      else if(p.early>0) label='조출+정상';
-      else if(p.ot>0) label='잔업';
-      ev+=`<span class="ev normal">${label} · ${r.start}~${r.end}</span>`;
-      if(p.early>0) ev+=`<span class="ev holiday">조출 · ${fmtHours(p.early)}h</span>`;
-      if(p.normal>0) ev+=`<span class="ev normal">정상 · ${fmtHours(p.normal)}h</span>`;
-      if(p.ot>0) ev+=`<span class="ev ot">잔업 · ${fmtHours(p.ot)}h</span>`;
-   }
-   if(r?.kind==='holiday'){
-      const hh=holidayHoursFor(r);
-      ev=`<span class="ev holiday">공휴일 · ${r.start||'08:00'}~${r.end||'17:00'}</span><span class="ev holiday">${fmtHours(hh)}h</span>`;
-   }
-   out+=`<button class="${cls}" data-date="${ds}"><span class="num">${d}</span>${ev}</button>`;
+  const ds=key(y,m,d),r=find(ds),dow=new Date(y,m,d).getDay();
+  let cls='day'+(ds===today?' today':'')+((dow===0||dow===6)?' weekend':'');
+  let ev='';
+
+  if(r?.kind==='work'){
+   const p=workParts(r);
+   let label='정상출근';
+   if(p.early>0&&p.ot>0)label='조출+잔업';
+   else if(p.early>0)label='조출+정상';
+   else if(p.ot>0)label='잔업';
+
+   ev+=`<span class="ev normal">${label} · ${r.start}~${r.end}</span>`;
+   if(p.early>0)ev+=`<span class="ev holiday">조출 · ${fmtHours(p.early)}h</span>`;
+   if(p.normal>0)ev+=`<span class="ev normal">정상 · ${fmtHours(p.normal)}h</span>`;
+   if(p.ot>0)ev+=`<span class="ev ot">잔업 · ${fmtHours(p.ot)}h</span>`;
+  }
+
+  if(r?.kind==='holiday'){
+   const hh=holidayHoursFor(r);
+   ev=`<span class="ev holiday">공휴일 · ${r.start}~${r.end}</span><span class="ev holiday">${fmtHours(hh)}h</span>`;
+  }
+
+  out+=`<button class="${cls}" data-date="${ds}"><span class="num">${d}</span>${ev}</button>`;
  }
  $('calendar').innerHTML=out;
  $('calendar').querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>openEditor(b.dataset.date));
@@ -246,19 +324,22 @@ function renderCalendar(){
 function buildTimes(){
  const opts=[];
  for(let h=6;h<=23;h++){
-   for(let m of [0,30]){
-     if(h===23 && m===30) continue;
-     opts.push(`${pad(h)}:${pad(m)}`);
-   }
+  for(const m of [0,30]){
+   if(h===23&&m===30)continue;
+   opts.push(`${pad(h)}:${pad(m)}`);
+  }
  }
  $('startTime').innerHTML=opts.filter(t=>toMin(t)<=600).map(t=>`<option>${t}</option>`).join('');
  $('endTime').innerHTML=opts.filter(t=>toMin(t)>=960).map(t=>`<option>${t}</option>`).join('');
 }
 
 function openEditor(ds){
- selected=ds; $('editor').classList.remove('hidden'); $('editTitle').textContent=ds+' 근무 기록';
+ selected=ds;
+ $('editor').classList.remove('hidden');
+ $('editTitle').textContent=ds+' 근무 기록';
  $('timeEditor').classList.add('hidden');
- const r=find(ds); renderDetails(r);
+ const r=find(ds);
+ renderDetails(r);
  $('deleteBtn').style.visibility=r?'visible':'hidden';
  $('editor').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -269,67 +350,121 @@ function showTimeEditor(mode='work'){
  $('timeEditor').classList.remove('hidden');
 
  if(mode==='holiday'){
-   $('timeEditorTitle').textContent='공휴일 근무시간 설정';
-   $('timeEditorHint').textContent='공휴일은 실제 근무시간 전체를 공휴일근무로 계산합니다. 08:00~17:00 구간은 휴게 1시간, 17:00 이후 근무 시 추가 휴게 30분을 제외합니다.';
-   $('startTime').value=(r?.kind==='holiday'?(r.start||'08:00'):'08:00');
-   $('endTime').value=(r?.kind==='holiday'?(r.end||'17:00'):'17:00');
+  $('timeEditorTitle').textContent='공휴일 근무시간 설정';
+  $('timeEditorHint').textContent='공휴일은 실제 근무시간 전체를 공휴일근무로 계산합니다. 08:00~17:00 구간은 휴게 1시간, 17:00 이후 근무 시 추가 휴게 30분을 제외합니다.';
+  $('startTime').value=r?.kind==='holiday'?(r.start||'08:00'):'08:00';
+  $('endTime').value=r?.kind==='holiday'?(r.end||'17:00'):'17:00';
  }else{
-   $('timeEditorTitle').textContent='평일 근무시간 설정';
-   $('timeEditorHint').textContent='08:00 이전 근무는 조출로 추가되고, 08:00~17:00은 정상근무, 17:00 이후는 휴게 30분을 제외하고 잔업으로 계산합니다.';
-   $('startTime').value=(r?.kind==='work'?r.start:'08:00');
-   $('endTime').value=(r?.kind==='work'?r.end:'17:00');
+  $('timeEditorTitle').textContent='평일 근무시간 설정';
+  $('timeEditorHint').textContent='08:00 이전 근무는 조출로 추가되고, 08:00~17:00은 정상근무, 17:00 이후는 휴게 30분을 제외하고 잔업으로 계산합니다.';
+  $('startTime').value=r?.kind==='work'?r.start:'08:00';
+  $('endTime').value=r?.kind==='work'?r.end:'17:00';
  }
 }
 
-function saveTimeEntry(){
+async function saveTimeEntry(){
+ if(!currentUser)return;
  const start=$('startTime').value,end=$('endTime').value;
- if(toMin(end)<=toMin(start)){alert('퇴근시간은 출근시간보다 늦어야 합니다.');return;}
+ if(toMin(end)<=toMin(start)){
+  alert('퇴근시간은 출근시간보다 늦어야 합니다.');
+  return;
+ }
 
- records=records.filter(r=>r.date!==selected);
- records.push({date:selected,kind:editMode==='holiday'?'holiday':'work',start,end});
+ const entry={date:selected,kind:editMode==='holiday'?'holiday':'work',start,end};
+ setCloudStatus('☁︎ 저장 중…');
+
+ const {error}=await sb.from('work_records').upsert({
+  user_id:currentUser.id,
+  work_date:entry.date,
+  kind:entry.kind,
+  start_time:entry.start,
+  end_time:entry.end,
+  updated_at:new Date().toISOString()
+ },{onConflict:'user_id,work_date'});
+
+ if(error){
+  console.error(error);
+  setCloudStatus('저장 실패',true);
+  alert('서버 저장에 실패했습니다. 인터넷 연결을 확인하고 다시 시도해주세요.');
+  return;
+ }
+
+ records=records.filter(r=>r.date!==entry.date);
+ records.push(entry);
  records.sort((a,b)=>a.date.localeCompare(b.date));
-
- persist();
  $('timeEditor').classList.add('hidden');
- renderDetails(find(selected));
+ renderDetails(entry);
  $('deleteBtn').style.visibility='visible';
  renderAll();
+ setCloudStatus('☁︎ 저장됨');
 }
 
 function renderDetails(r){
  if(!r){
-   $('workDetails').innerHTML='<strong>근무기록을 선택하세요.</strong><span>출근 또는 공휴일근무를 선택하면 됩니다.</span>'; return;
+  $('workDetails').innerHTML='<strong>근무기록을 선택하세요.</strong><span>출근 또는 공휴일근무를 선택하면 됩니다.</span>';
+  return;
  }
+
  if(r.kind==='holiday'){
-   const hh=holidayHoursFor(r);
-   $('workDetails').innerHTML=`<strong>공휴일근무</strong><span>${r.start||'08:00'} ~ ${r.end||'17:00'}</span><span>공휴일 실근무 ${fmtHours(hh)}시간</span><span>적용시급 : ${won(premiumRate())} (기본시급 × 1.5)</span><span>공휴일근무 수당 : ${won(premiumRate()*hh)}</span>`; return;
+  const hh=holidayHoursFor(r);
+  $('workDetails').innerHTML=`<strong>공휴일근무</strong><span>${r.start} ~ ${r.end}</span><span>공휴일 실근무 ${fmtHours(hh)}시간</span><span>적용시급 : ${won(premiumRate())} (기본시급 × 1.5)</span><span>공휴일근무 수당 : ${won(premiumRate()*hh)}</span>`;
+  return;
  }
+
  const p=workParts(r);
  let status='정상출근';
- if(p.early>0 && p.ot>0) status='조출 + 잔업';
- else if(p.early>0) status='조출 + 정상출근';
- else if(p.ot>0) status='잔업';
+ if(p.early>0&&p.ot>0)status='조출 + 잔업';
+ else if(p.early>0)status='조출 + 정상출근';
+ else if(p.ot>0)status='잔업';
+
  let lines=`<strong>${status}</strong><span>${r.start} ~ ${r.end}</span>`;
- if(p.early>0) lines+=`<span>조기출근 ${fmtHours(p.early)}시간 × ${won(premiumRate())} = ${won(p.early*premiumRate())}</span>`;
- if(p.normal>0) lines+=`<span>정상근무 ${fmtHours(p.normal)}시간</span>`;
- if(p.ot>0) lines+=`<span>잔업 ${fmtHours(p.ot)}시간 × ${won(premiumRate())} = ${won(p.ot*premiumRate())}</span>`;
- if(r.end>'17:00') lines+='<span>17:00 이후 휴게시간 30분 제외</span>';
+ if(p.early>0)lines+=`<span>조기출근 ${fmtHours(p.early)}시간 × ${won(premiumRate())} = ${won(p.early*premiumRate())}</span>`;
+ if(p.normal>0)lines+=`<span>정상근무 ${fmtHours(p.normal)}시간</span>`;
+ if(p.ot>0)lines+=`<span>잔업 ${fmtHours(p.ot)}시간 × ${won(premiumRate())} = ${won(p.ot*premiumRate())}</span>`;
+ if(r.end>'17:00')lines+='<span>17:00 이후 휴게시간 30분 제외</span>';
  $('workDetails').innerHTML=lines;
 }
 
-function persist(){localStorage.setItem(REC,JSON.stringify(records));}
-function remove(){
- if(!selected)return;
- records=records.filter(r=>r.date!==selected); persist();
- $('editor').classList.add('hidden'); selected=''; renderAll();
+async function remove(){
+ if(!selected||!currentUser)return;
+ const target=selected;
+ if(!confirm(target+' 근무기록을 삭제할까요?'))return;
+
+ setCloudStatus('☁︎ 삭제 중…');
+ const {error}=await sb.from('work_records')
+  .delete()
+  .eq('user_id',currentUser.id)
+  .eq('work_date',target);
+
+ if(error){
+  console.error(error);
+  setCloudStatus('삭제 실패',true);
+  alert('기록 삭제에 실패했습니다.');
+  return;
+ }
+
+ records=records.filter(r=>r.date!==target);
+ $('editor').classList.add('hidden');
+ selected='';
+ renderAll();
+ setCloudStatus('☁︎ 저장됨');
 }
 
 function calc(){
  const mr=records.filter(r=>r.date.startsWith(monthKey()));
- const work=mr.filter(r=>r.kind==='work'), holidays=mr.filter(r=>r.kind==='holiday');
+ const work=mr.filter(r=>r.kind==='work'),holidays=mr.filter(r=>r.kind==='holiday');
  let normalHours=0,earlyHours=0,otHours=0,otDays=0;
- work.forEach(r=>{const p=workParts(r);normalHours+=p.normal;earlyHours+=p.early;otHours+=p.ot;if(p.ot>0)otDays++});
- const holidayDays=holidays.length, holidayHours=holidays.reduce((sum,r)=>sum+holidayHoursFor(r),0);
+
+ work.forEach(r=>{
+  const p=workParts(r);
+  normalHours+=p.normal;
+  earlyHours+=p.early;
+  otHours+=p.ot;
+  if(p.ot>0)otDays++;
+ });
+
+ const holidayDays=holidays.length;
+ const holidayHours=holidays.reduce((sum,r)=>sum+holidayHoursFor(r),0);
  const rate=premiumRate();
  const base=round10(settings.normalRate*settings.baseHours);
  const early=round10(rate*earlyHours);
@@ -339,6 +474,7 @@ function calc(){
  const care=round10(settings.health*settings.careRate);
  const employment=round10(gross*settings.employmentRate);
  const insurance=round10(settings.pension)+round10(settings.health)+care+employment;
+
  return{
   workDays:work.length,otDays,holidayDays,normalHours,earlyHours,otHours,holidayHours,
   totalWorkedHours:normalHours+earlyHours+otHours+holidayHours,
@@ -347,10 +483,15 @@ function calc(){
 }
 
 function renderPay(){
- const c=calc(); $('salaryTitle').textContent=(view.getMonth()+1)+'월 급여';
- $('basePay').textContent=won(c.base); $('earlyPay').textContent=won(c.early);
- $('overtimePay').textContent=won(c.overtime); $('holidayPay').textContent=won(c.holiday);
- $('grossPay').textContent=won(c.gross); $('insurancePay').textContent='- '+won(c.insurance); $('netPay').textContent=won(c.net);
+ const c=calc();
+ $('salaryTitle').textContent=(view.getMonth()+1)+'월 급여';
+ $('basePay').textContent=won(c.base);
+ $('earlyPay').textContent=won(c.early);
+ $('overtimePay').textContent=won(c.overtime);
+ $('holidayPay').textContent=won(c.holiday);
+ $('grossPay').textContent=won(c.gross);
+ $('insurancePay').textContent='- '+won(c.insurance);
+ $('netPay').textContent=won(c.net);
  $('normalDays').textContent=c.workDays+'일';
  $('earlyHours').textContent=fmtHours(c.earlyHours)+'시간';
  $('otDays').textContent=c.otDays+'일 / '+fmtHours(c.otHours)+'시간';
@@ -360,34 +501,308 @@ function renderPay(){
  $('totalOvertimeHours').textContent=fmtHours(c.otHours)+'시간';
  $('totalHolidayHours').textContent=fmtHours(c.holidayHours)+'시간';
  $('totalWorkedHours').textContent=fmtHours(c.totalWorkedHours)+'시간';
- if($('premiumRateView')) $('premiumRateView').value=won(premiumRate());
+ if($('premiumRateView'))$('premiumRateView').value=won(premiumRate());
 }
 
-function renderAll(){renderCalendar();renderPay();}
-function loadSettings(){
+function renderAll(){
+ renderCalendar();
+ renderPay();
+}
+
+function loadSettingsInputs(){
  Object.keys(settings).forEach(k=>{if($(k))$(k).value=settings[k]});
- if($('premiumRateView')) $('premiumRateView').value=won(premiumRate());
-}
-function saveSettings(){
- ['normalRate','baseHours','pension','health','careRate','employmentRate'].forEach(k=>{if($(k))settings[k]=+$(k).value||0});
- localStorage.setItem(SET,JSON.stringify(settings)); renderPay(); renderDetails(find(selected));
+ if($('premiumRateView'))$('premiumRateView').value=won(premiumRate());
 }
 
-buildTimes();
-$('workChoice').onclick=()=>showTimeEditor('work');
-$('holidayChoice').onclick=()=>showTimeEditor('holiday');
-$('applyTime').onclick=saveTimeEntry;
-$('deleteBtn').onclick=remove;
-$('closeBtn').onclick=()=>{$('editor').classList.add('hidden');selected='';renderCalendar()};
-$('prevMonth').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);renderAll()};
-$('nextMonth').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);renderAll()};
-$('prevYear').onclick=()=>{view=new Date(view.getFullYear()-1,view.getMonth(),1);renderAll()};
-$('todayBtn').onclick=()=>{const n=new Date();view=new Date(n.getFullYear(),n.getMonth(),1);renderAll()};
-$('todayAdd').onclick=()=>{const n=new Date();view=new Date(n.getFullYear(),n.getMonth(),1);renderAll();openEditor(key(n.getFullYear(),n.getMonth(),n.getDate()))};
-$('settingsBtn').onclick=()=>{$('settings').classList.toggle('hidden');if(!$('settings').classList.contains('hidden'))$('settings').scrollIntoView({behavior:'smooth'})};
-['normalRate','baseHours','pension','health','careRate','employmentRate'].forEach(k=>{if($(k))$(k).oninput=saveSettings});
-loadSettings(); renderAll();
-if('serviceWorker' in navigator)navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+async function saveSettings(){
+ if(!currentUser)return;
+
+ ['normalRate','baseHours','pension','health','careRate','employmentRate'].forEach(k=>{
+  if($(k))settings[k]=+$(k).value||0;
+ });
+
+ renderPay();
+ renderDetails(find(selected));
+ setCloudStatus('☁︎ 설정 저장 중…');
+
+ const payload={
+  user_id:currentUser.id,
+  normal_rate:settings.normalRate,
+  base_hours:settings.baseHours,
+  pension:settings.pension,
+  health:settings.health,
+  care_rate:settings.careRate,
+  employment_rate:settings.employmentRate,
+  updated_at:new Date().toISOString()
+ };
+
+ const {error}=await sb.from('user_settings').upsert(payload,{onConflict:'user_id'});
+ if(error){
+  console.error(error);
+  setCloudStatus('설정 저장 실패',true);
+  alert('급여 설정 저장에 실패했습니다.');
+  return;
+ }
+ setCloudStatus('☁︎ 저장됨');
+}
+
+async function loadCloudData(){
+ if(!currentUser)return;
+ setCloudStatus('☁︎ 불러오는 중…');
+
+ const [recordsRes,settingsRes]=await Promise.all([
+  sb.from('work_records')
+    .select('work_date,kind,start_time,end_time')
+    .eq('user_id',currentUser.id)
+    .order('work_date'),
+  sb.from('user_settings')
+    .select('normal_rate,base_hours,pension,health,care_rate,employment_rate')
+    .eq('user_id',currentUser.id)
+    .maybeSingle()
+ ]);
+
+ if(recordsRes.error)throw recordsRes.error;
+ if(settingsRes.error)throw settingsRes.error;
+
+ records=(recordsRes.data||[]).map(r=>({
+  date:r.work_date,
+  kind:r.kind,
+  start:trimTime(r.start_time),
+  end:trimTime(r.end_time)
+ }));
+
+ if(settingsRes.data){
+  const s=settingsRes.data;
+  settings={
+   normalRate:+s.normal_rate,
+   baseHours:+s.base_hours,
+   pension:+s.pension,
+   health:+s.health,
+   careRate:+s.care_rate,
+   employmentRate:+s.employment_rate
+  };
+ }else{
+  settings={...DEFAULT_SETTINGS};
+  await sb.from('user_settings').upsert({
+   user_id:currentUser.id,
+   normal_rate:settings.normalRate,
+   base_hours:settings.baseHours,
+   pension:settings.pension,
+   health:settings.health,
+   care_rate:settings.careRate,
+   employment_rate:settings.employmentRate
+  },{onConflict:'user_id'});
+ }
+
+ loadSettingsInputs();
+ renderAll();
+ setCloudStatus('☁︎ 저장됨');
+ checkLegacyImport();
+}
+
+function getLegacyRecords(){
+ const keys=['workcalendar_simple_v7_records','workcalendar_simple_v6_records'];
+ for(const k of keys){
+  try{
+   const arr=JSON.parse(localStorage.getItem(k)||'[]');
+   if(Array.isArray(arr)&&arr.length)return arr;
+  }catch(e){}
+ }
+ return [];
+}
+
+function migrateLegacyRecord(r){
+ if(r.kind==='normal')return{date:r.date,kind:'work',start:'08:00',end:'17:00'};
+ if(r.kind==='overtime')return{date:r.date,kind:'work',start:'08:00',end:'20:00'};
+ if(r.kind==='holiday')return{date:r.date,kind:'holiday',start:r.start||'08:00',end:r.end||'17:00'};
+ if(r.kind==='work')return{date:r.date,kind:'work',start:r.start||'08:00',end:r.end||'17:00'};
+ return null;
+}
+
+function checkLegacyImport(){
+ if(!currentUser)return;
+ const marker='workcalendar_v8_imported_'+currentUser.id;
+ const old=getLegacyRecords();
+ $('migrationBanner').classList.toggle('hidden',!old.length||localStorage.getItem(marker)==='1');
+}
+
+async function importLegacy(){
+ if(!currentUser)return;
+ const old=getLegacyRecords().map(migrateLegacyRecord).filter(Boolean);
+ if(!old.length){
+  $('migrationBanner').classList.add('hidden');
+  return;
+ }
+
+ if(!confirm('기존 근무기록을 현재 로그인한 계정으로 가져올까요? 같은 날짜의 서버 기록은 기존 기록으로 변경될 수 있습니다.'))return;
+
+ setCloudStatus('☁︎ 기존 기록 가져오는 중…');
+ const rows=old.map(r=>({
+  user_id:currentUser.id,
+  work_date:r.date,
+  kind:r.kind,
+  start_time:r.start,
+  end_time:r.end,
+  updated_at:new Date().toISOString()
+ }));
+
+ const {error}=await sb.from('work_records').upsert(rows,{onConflict:'user_id,work_date'});
+ if(error){
+  console.error(error);
+  setCloudStatus('가져오기 실패',true);
+  alert('기존 기록을 가져오지 못했습니다.');
+  return;
+ }
+
+ // Import old V7 settings if available.
+ try{
+  const raw=JSON.parse(localStorage.getItem('workcalendar_simple_v7_settings')||'null');
+  if(raw){
+   settings={
+    normalRate:+raw.normalRate||DEFAULT_SETTINGS.normalRate,
+    baseHours:+raw.baseHours||DEFAULT_SETTINGS.baseHours,
+    pension:+raw.pension||DEFAULT_SETTINGS.pension,
+    health:+raw.health||DEFAULT_SETTINGS.health,
+    careRate:+raw.careRate||DEFAULT_SETTINGS.careRate,
+    employmentRate:+raw.employmentRate||DEFAULT_SETTINGS.employmentRate
+   };
+   await sb.from('user_settings').upsert({
+    user_id:currentUser.id,
+    normal_rate:settings.normalRate,
+    base_hours:settings.baseHours,
+    pension:settings.pension,
+    health:settings.health,
+    care_rate:settings.careRate,
+    employment_rate:settings.employmentRate
+   },{onConflict:'user_id'});
+  }
+ }catch(e){console.warn(e)}
+
+ localStorage.setItem('workcalendar_v8_imported_'+currentUser.id,'1');
+ $('migrationBanner').classList.add('hidden');
+ await loadCloudData();
+ alert('기존 기록을 현재 계정으로 가져왔습니다.');
+}
+
+async function enterApp(user){
+ currentUser=user;
+ showApp();
+ try{
+  await loadCloudData();
+ }catch(error){
+  console.error(error);
+  setCloudStatus('서버 연결 실패',true);
+  alert('서버에서 데이터를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.');
+ }
+}
+
+async function signIn(){
+ const email=$('authEmail').value.trim();
+ const password=$('authPassword').value;
+ if(!email||!password){
+  $('authMsg').textContent='이메일과 비밀번호를 입력해주세요.';
+  return;
+ }
+
+ $('authMsg').textContent='로그인 중…';
+ const {data,error}=await sb.auth.signInWithPassword({email,password});
+ if(error){
+  $('authMsg').textContent='로그인 실패: '+error.message;
+  return;
+ }
+ $('authMsg').textContent='';
+ await enterApp(data.user);
+}
+
+async function signUp(){
+ const email=$('authEmail').value.trim();
+ const password=$('authPassword').value;
+ if(!email||password.length<6){
+  $('authMsg').textContent='이메일과 6자 이상의 비밀번호를 입력해주세요.';
+  return;
+ }
+
+ $('authMsg').textContent='회원가입 중…';
+ const redirectTo=location.origin+location.pathname;
+ const {data,error}=await sb.auth.signUp({
+  email,
+  password,
+  options:{emailRedirectTo:redirectTo}
+ });
+
+ if(error){
+  $('authMsg').textContent='회원가입 실패: '+error.message;
+  return;
+ }
+
+ if(data.session&&data.user){
+  $('authMsg').textContent='';
+  await enterApp(data.user);
+ }else{
+  $('authMsg').textContent='회원가입 완료. 이메일로 온 확인 링크를 누른 뒤 로그인해주세요.';
+ }
+}
+
+async function signOut(){
+ if(!confirm('로그아웃할까요? 서버에 저장된 기록은 지워지지 않습니다.'))return;
+ await sb.auth.signOut();
+ records=[];
+ settings={...DEFAULT_SETTINGS};
+ $('editor').classList.add('hidden');
+ $('settings').classList.add('hidden');
+ showAuth();
+}
+
+async function init(){
+ buildTimes();
+
+ $('workChoice').onclick=()=>showTimeEditor('work');
+ $('holidayChoice').onclick=()=>showTimeEditor('holiday');
+ $('applyTime').onclick=saveTimeEntry;
+ $('deleteBtn').onclick=remove;
+ $('closeBtn').onclick=()=>{$('editor').classList.add('hidden');selected='';renderCalendar()};
+ $('prevMonth').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);renderAll()};
+ $('nextMonth').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);renderAll()};
+ $('prevYear').onclick=()=>{view=new Date(view.getFullYear()-1,view.getMonth(),1);renderAll()};
+ $('todayBtn').onclick=()=>{const n=new Date();view=new Date(n.getFullYear(),n.getMonth(),1);renderAll()};
+ $('todayAdd').onclick=()=>{const n=new Date();view=new Date(n.getFullYear(),n.getMonth(),1);renderAll();openEditor(key(n.getFullYear(),n.getMonth(),n.getDate()))};
+ $('settingsBtn').onclick=()=>{$('settings').classList.toggle('hidden');if(!$('settings').classList.contains('hidden'))$('settings').scrollIntoView({behavior:'smooth'})};
+
+ ['normalRate','baseHours','pension','health','careRate','employmentRate'].forEach(k=>{
+  if($(k))$(k).onchange=saveSettings;
+ });
+
+ $('loginBtn').onclick=signIn;
+ $('signupBtn').onclick=signUp;
+ $('logoutBtn').onclick=signOut;
+ $('importOldBtn').onclick=importLegacy;
+
+ $('authPassword').addEventListener('keydown',e=>{if(e.key==='Enter')signIn()});
+
+ const {data,error}=await sb.auth.getSession();
+ if(error){
+  console.error(error);
+  showAuth();
+  $('authMsg').textContent='로그인 상태를 확인하지 못했습니다.';
+  return;
+ }
+
+ if(data.session?.user){
+  await enterApp(data.session.user);
+ }else{
+  showAuth();
+ }
+
+ sb.auth.onAuthStateChange((event,session)=>{
+  if(event==='SIGNED_OUT')showAuth();
+ });
+
+ if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./service-worker.js').catch(console.warn);
+ }
+}
+
+init();
 })();
 </script>
 </body>
