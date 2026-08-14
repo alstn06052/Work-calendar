@@ -12,60 +12,50 @@
 <title>근무캘린더</title>
 <style>
 *{box-sizing:border-box}
-:root{
- --bg:#000;--panel:#111113;--line:#2c2c2e;--text:#fff;--muted:#8e8e93;
- --red:#ff453a;--blue:#0a84ff;--green:#30d158;--orange:#ff9f0a;--purple:#bf5af2;
-}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif}
-body{min-height:100vh;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
-.app{max-width:900px;margin:auto;padding-bottom:42px}
-.top{padding:12px 18px 0}
-.toprow{display:flex;justify-content:space-between;align-items:center}
-.pillbtn{background:#1c1c1e;color:#fff;border:1px solid #2c2c2e;border-radius:999px;padding:10px 14px;font-weight:700}
-.circlebtn{width:44px;height:44px;border-radius:50%;background:#1c1c1e;color:#fff;border:1px solid #2c2c2e;font-size:24px}
-.month{font-size:44px;font-weight:800;margin:28px 0 12px}
+:root{--bg:#000;--panel:#111113;--line:#2c2c2e;--text:#fff;--muted:#8e8e93;--red:#ff453a;--blue:#0a84ff;--green:#30d158;--orange:#ff9f0a}
+html,body{margin:0;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif}
+body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.app{max-width:900px;margin:auto;padding-bottom:46px}
+.top{padding:12px 18px 0}.toprow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pill{border:1px solid #2c2c2e;background:#1c1c1e;color:#fff;border-radius:999px;padding:10px 14px;font-weight:750}
+.circle{border:1px solid #2c2c2e;background:#1c1c1e;color:#fff;border-radius:50%;width:44px;height:44px;font-size:20px}
+.month{font-size:44px;font-weight:850;margin:28px 0 12px}
 .week{display:grid;grid-template-columns:repeat(7,1fr);padding:0 8px 10px;border-bottom:1px solid var(--line)}
-.week div{text-align:center;font-size:12px;font-weight:700;color:#d1d1d6}
-.week div:first-child{color:#ff6961}.week div:last-child{color:#8e8e93}
+.week div{text-align:center;font-size:12px;font-weight:700;color:#d1d1d6}.week div:first-child{color:#ff6961}.week div:last-child{color:#8e8e93}
 .cal{display:grid;grid-template-columns:repeat(7,1fr)}
 .day{min-height:120px;background:#000;color:#fff;border:0;border-bottom:1px solid var(--line);padding:7px 5px;text-align:left;overflow:hidden}
-.day.blank{pointer-events:none}.num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:650}
-.day.today .num{background:var(--red)}.day.weekend .num{color:#8e8e93}
-.ev{display:block;margin-top:4px;border-radius:5px;padding:3px 5px;font-size:8px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev.n{background:#12391f;color:#6ce689}.ev.o{background:#0b2d52;color:#58a6ff}.ev.h{background:#4a2500;color:#ffb340}.ev.x{background:#30194a;color:#d8a8ff}.ev.off{background:#2c2c2e;color:#aeaeb2}
+.day.blank{pointer-events:none}.day.weekend .num{color:#8e8e93}
+.num{display:flex;width:32px;height:32px;border-radius:50%;align-items:center;justify-content:center;font-size:18px;font-weight:650}
+.day.today .num{background:var(--red)}
+.ev{display:block;margin-top:4px;border-radius:6px;padding:4px 5px;font-size:8px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.normal{background:#12391f;color:#6ce689}.ev.ot{background:#0b2d52;color:#58a6ff}.ev.off{background:#2c2c2e;color:#aeaeb2}
 .footer{display:flex;justify-content:space-between;align-items:center;padding:18px}
-.panel{margin:14px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:16px}
-.hidden{display:none}
-.title{font-size:18px;font-weight:800;margin-bottom:12px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}
-label{display:block;font-size:12px;color:#aeaeb2;margin-bottom:5px}
-input,select,textarea{width:100%;background:#1c1c1e;color:#fff;border:1px solid #3a3a3c;border-radius:12px;padding:11px;font:inherit}
-textarea{min-height:76px}
-.preview{margin-top:10px;background:#1c1c1e;border-radius:12px;padding:10px;font-size:12px;color:#d1d1d6}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-.actions button{border:0;border-radius:12px;padding:12px;font-weight:800}
-.delete{background:#3a1212;color:#ff6961}.save{background:var(--blue);color:#fff}
-.metrics{display:grid;grid-template-columns:1fr;gap:10px}
-.metric{background:#1c1c1e;border-radius:15px;padding:14px}
-.metric span{font-size:12px;color:#8e8e93}.metric b{display:block;font-size:24px;margin-top:5px}
-.metric.hero{background:#161c2a}.metric.hero b{color:#64a8ff;font-size:28px}
-.note{font-size:11px;color:#8e8e93;line-height:1.5;margin-top:8px}
-.settings{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.setting{background:#1c1c1e;border-radius:12px;padding:10px}
-.setting input{padding:9px}
-.install{background:#10243a;border:1px solid #164a77;color:#cfe8ff}
-.install strong{display:block;margin-bottom:4px}
-@media(max-width:520px){.day{min-height:110px}.settings{grid-template-columns:1fr}.month{font-size:42px}}
+.panel{margin:14px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:16px}.hidden{display:none}
+.title{font-size:18px;font-weight:850;margin-bottom:12px}
+.choicegrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choice{border:0;border-radius:16px;padding:16px 10px;font-weight:850;font-size:16px}
+.choice.normal{background:#12391f;color:#78ee92}.choice.ot{background:#0b2d52;color:#72b7ff}
+.details{margin-top:12px;background:#1c1c1e;border-radius:14px;padding:12px;line-height:1.55}
+.details strong{display:block;font-size:16px}.details span{display:block;color:#d1d1d6;font-size:13px}
+.small{font-size:11px;color:#8e8e93;line-height:1.5}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.actions button{border:0;border-radius:12px;padding:12px;font-weight:800}
+.del{background:#3a1212;color:#ff6961}.save{background:#0a84ff;color:#fff}
+.metrics{display:grid;grid-template-columns:1fr;gap:10px}.metric{background:#1c1c1e;border-radius:15px;padding:14px}
+.metric span{font-size:12px;color:#8e8e93}.metric b{display:block;font-size:24px;margin-top:5px}.metric.hero{background:#161c2a}.metric.hero b{color:#64a8ff;font-size:28px}
+.rows{margin-top:12px}.row{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:10px 0;font-size:13px}.row span{color:#8e8e93}
+.setting{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field{background:#1c1c1e;border-radius:12px;padding:10px}
+.field label{display:block;color:#8e8e93;font-size:11px;margin-bottom:5px}.field input{width:100%;background:#111113;color:#fff;border:1px solid #3a3a3c;border-radius:10px;padding:9px;font:inherit}
+@media(max-width:520px){.day{min-height:108px}.setting{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
     <div class="toprow">
-      <button id="yearBtn" class="pillbtn">‹ <span id="yearText"></span></button>
+      <button id="prevYear" class="pill">‹ <span id="yearText"></span></button>
       <div style="display:flex;gap:8px">
-        <button id="settingsBtn" class="circlebtn">⚙︎</button>
-        <button id="addToday" class="circlebtn">＋</button>
+        <button id="settingsBtn" class="circle">⚙︎</button>
+        <button id="todayAdd" class="circle">＋</button>
       </div>
     </div>
     <div id="monthTitle" class="month"></div>
@@ -75,141 +65,130 @@ textarea{min-height:76px}
   <div id="calendar" class="cal"></div>
 
   <div class="footer">
-    <button id="todayBtn" class="pillbtn">오늘</button>
-    <div style="display:flex;gap:8px"><button id="prev" class="circlebtn">‹</button><button id="next" class="circlebtn">›</button></div>
+    <button id="todayBtn" class="pill">오늘</button>
+    <div style="display:flex;gap:8px"><button id="prevMonth" class="circle">‹</button><button id="nextMonth" class="circle">›</button></div>
   </div>
 
   <section id="editor" class="panel hidden">
     <div id="editTitle" class="title"></div>
-    <div class="grid">
-      <div>
-        <label>근무 구분</label>
-        <select id="type">
-          <option value="normal">평일근무</option>
-          <option value="holiday">휴일특근</option>
-          <option value="paidOff">연차/유급휴무</option>
-          <option value="off">휴무</option>
-          <option value="absence">결근</option>
-        </select>
-      </div>
-      <div>
-        <label>휴게시간</label>
-        <select id="breakMin"><option value="0">없음</option><option value="30">30분</option><option value="60" selected>60분</option><option value="90">90분</option><option value="120">120분</option></select>
-      </div>
-      <div><label>출근</label><input id="start" type="time"></div>
-      <div><label>퇴근</label><input id="end" type="time"></div>
-      <div><label>야간근무시간</label><input id="night" type="number" min="0" step="0.5" value="0"></div>
-      <div><label>지각·조퇴·외출</label><input id="deduct" type="number" min="0" step="0.5" value="0"></div>
-      <div class="full"><label>메모</label><textarea id="memo" placeholder="오늘 한 일"></textarea></div>
+    <div class="choicegrid">
+      <button id="normalChoice" class="choice normal">정상퇴근</button>
+      <button id="otChoice" class="choice ot">잔업</button>
     </div>
-    <div id="preview" class="preview"></div>
-    <div class="actions"><button id="deleteBtn" class="delete">삭제</button><button id="saveBtn" class="save">저장</button></div>
+    <div id="workDetails" class="details"></div>
+    <div class="actions"><button id="deleteBtn" class="del">기록 삭제</button><button id="closeBtn" class="save">완료</button></div>
   </section>
 
   <section class="panel">
     <div id="salaryTitle" class="title">이번 달 급여</div>
     <div class="metrics">
-      <div class="metric"><span>세전 지급액</span><b id="gross">0원</b></div>
-      <div class="metric"><span>4대보험</span><b id="insurance">0원</b></div>
-      <div class="metric hero"><span>4대보험 후 예상 수령액</span><b id="net">0원</b></div>
+      <div class="metric"><span>기본급</span><b id="basePay">0원</b></div>
+      <div class="metric"><span>잔업 수당</span><b id="overtimePay">0원</b></div>
+      <div class="metric"><span>세전 지급액</span><b id="grossPay">0원</b></div>
+      <div class="metric"><span>4대보험</span><b id="insurancePay">0원</b></div>
+      <div class="metric hero"><span>4대보험 후 예상 수령액</span><b id="netPay">0원</b></div>
     </div>
-    <div class="note">소득세·지방소득세·기숙사비·상조회비 등은 계산하지 않습니다.</div>
+    <div class="rows">
+      <div class="row"><span>정상퇴근 일수</span><strong id="normalDays">0일</strong></div>
+      <div class="row"><span>잔업 일수</span><strong id="otDays">0일</strong></div>
+      <div class="row"><span>잔업시간</span><strong id="otHours">0시간</strong></div>
+    </div>
+    <div class="small" style="margin-top:8px">잔업 1회 = 17:00~20:00 중 휴게 30분 제외 → 2시간 30분 × 잔업시급.</div>
   </section>
 
   <section id="settings" class="panel hidden">
     <div class="title">급여 설정</div>
-    <div class="settings">
-      <div class="setting"><label>시급</label><input id="hourly" type="number" value="11710"></div>
-      <div class="setting"><label>기본급 시간</label><input id="baseHours" type="number" value="209"></div>
-      <div class="setting"><label>연장 배수</label><input id="otMult" type="number" step="0.1" value="1.5"></div>
-      <div class="setting"><label>휴일 8h 이내 배수</label><input id="hInMult" type="number" step="0.1" value="1.5"></div>
-      <div class="setting"><label>휴일 8h 초과 배수</label><input id="hOverMult" type="number" step="0.1" value="2"></div>
-      <div class="setting"><label>야간 추가 배수</label><input id="nightMult" type="number" step="0.1" value="0.5"></div>
-      <div class="setting"><label>국민연금</label><input id="pension" type="number" value="145440"></div>
-      <div class="setting"><label>건강보험</label><input id="health" type="number" value="108980"></div>
-      <div class="setting"><label>장기요양 비율</label><input id="careRate" type="number" step="0.0000001" value="0.1314047287"></div>
-      <div class="setting"><label>고용보험 비율</label><input id="employmentRate" type="number" step="0.001" value="0.009"></div>
+    <div class="setting">
+      <div class="field"><label>일반 시급</label><input id="normalRate" type="number" value="11710"></div>
+      <div class="field"><label>기본급 인정시간</label><input id="baseHours" type="number" value="209"></div>
+      <div class="field"><label>잔업 시급</label><input id="otRate" type="number" value="17550"></div>
+      <div class="field"><label>잔업 1회 시간</label><input id="otPerDay" type="number" step="0.5" value="2.5"></div>
+      <div class="field"><label>국민연금</label><input id="pension" type="number" value="145440"></div>
+      <div class="field"><label>건강보험</label><input id="health" type="number" value="108980"></div>
+      <div class="field"><label>장기요양 비율</label><input id="careRate" type="number" step="0.0000001" value="0.1314047287"></div>
+      <div class="field"><label>고용보험 비율</label><input id="employmentRate" type="number" step="0.001" value="0.009"></div>
     </div>
-    <div class="note">산재보험은 근로자 급여에서 공제하지 않아 0원으로 처리합니다.</div>
-  </section>
-
-  <section class="panel install">
-    <strong>아이폰 설치</strong>
-    Safari에서 이 페이지를 연 뒤 <b>공유 → 홈 화면에 추가</b>를 누르면 앱처럼 실행됩니다.
   </section>
 </div>
 
 <script>
 (function(){
 "use strict";
-const REC='pwa_work_entries_v1', SET='pwa_work_settings_v1';
+const REC='workcalendar_simple_v2_records',SET='workcalendar_simple_v2_settings';
 let records=JSON.parse(localStorage.getItem(REC)||'[]');
-let settings=Object.assign({hourly:11710,baseHours:209,otMult:1.5,hInMult:1.5,hOverMult:2,nightMult:.5,pension:145440,health:108980,careRate:.1314047287,employmentRate:.009},JSON.parse(localStorage.getItem(SET)||'{}'));
+let settings=Object.assign({normalRate:11710,baseHours:209,otRate:17550,otPerDay:2.5,pension:145440,health:108980,careRate:.1314047287,employmentRate:.009},JSON.parse(localStorage.getItem(SET)||'{}'));
 let view=new Date();view.setDate(1);let selected='';
-const $=id=>document.getElementById(id), pad=n=>String(n).padStart(2,'0');
-const dateKey=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`, monthKey=()=>`${view.getFullYear()}-${pad(view.getMonth()+1)}`;
-const won=n=>Math.round(n||0).toLocaleString('ko-KR')+'원', round10=n=>Math.round((n||0)/10)*10;
+const $=id=>document.getElementById(id),pad=n=>String(n).padStart(2,'0');
+const key=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`,monthKey=()=>`${view.getFullYear()}-${pad(view.getMonth()+1)}`;
+const won=n=>Math.round(n||0).toLocaleString('ko-KR')+'원',round10=n=>Math.round((n||0)/10)*10;
 const find=d=>records.find(r=>r.date===d);
-
-function hours(r){
- if(['off','paidOff','absence'].includes(r.type)||!r.start||!r.end)return 0;
- const a=r.start.split(':').map(Number),b=r.end.split(':').map(Number);
- let mins=(b[0]*60+b[1])-(a[0]*60+a[1]);if(mins<=0)mins+=1440;
- return Math.max(0,mins-(+r.breakMin||0))/60;
-}
-function parts(r){const t=hours(r);if(r.type==='normal')return{n:Math.min(t,8),o:Math.max(0,t-8),hi:0,ho:0,t};if(r.type==='holiday')return{n:0,o:0,hi:Math.min(t,8),ho:Math.max(0,t-8),t};return{n:0,o:0,hi:0,ho:0,t:0};}
 
 function renderCalendar(){
  const y=view.getFullYear(),m=view.getMonth(),first=new Date(y,m,1).getDay(),last=new Date(y,m+1,0).getDate();
  $('yearText').textContent=y+'년';$('monthTitle').textContent=(m+1)+'월';
- const now=new Date(),today=dateKey(now.getFullYear(),now.getMonth(),now.getDate());
- let html='';for(let i=0;i<first;i++)html+='<div class="day blank"></div>';
+ const now=new Date(),today=key(now.getFullYear(),now.getMonth(),now.getDate());let html='';
+ for(let i=0;i<first;i++)html+='<div class="day blank"></div>';
  for(let d=1;d<=last;d++){
-  const ds=dateKey(y,m,d),r=find(ds),dow=new Date(y,m,d).getDay();let cls='day'+(ds===today?' today':'')+((dow===0||dow===6)?' weekend':'');
+  const ds=key(y,m,d),r=find(ds),dow=new Date(y,m,d).getDay();let cls='day'+(ds===today?' today':'')+((dow===0||dow===6)?' weekend':'');
   let ev='';
-  if(r){
-   if(r.type==='off')ev='<span class="ev off">휴무</span>';
-   else if(r.type==='paidOff')ev='<span class="ev x">연차</span>';
-   else if(r.type==='absence')ev='<span class="ev off">결근</span>';
-   else{const p=parts(r);if(p.n)ev+=`<span class="ev n">일반 ${p.n.toFixed(1)}h</span>`;if(p.o)ev+=`<span class="ev o">연장 ${p.o.toFixed(1)}h</span>`;if(p.hi)ev+=`<span class="ev h">특근 ${p.hi.toFixed(1)}h</span>`;if(p.ho)ev+=`<span class="ev h">초과 ${p.ho.toFixed(1)}h</span>`;if(+r.night>0)ev+=`<span class="ev x">야간 ${(+r.night).toFixed(1)}h</span>`;}
-  }
+  if(r?.kind==='normal')ev='<span class="ev normal">정상퇴근 · 8h</span>';
+  if(r?.kind==='overtime')ev='<span class="ev normal">정상 · 8h</span><span class="ev ot">잔업 · 2.5h</span>';
   html+=`<button class="${cls}" data-date="${ds}"><span class="num">${d}</span>${ev}</button>`;
  }
  $('calendar').innerHTML=html;$('calendar').querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>openEditor(b.dataset.date));
 }
 function openEditor(ds){
- selected=ds;const r=find(ds);$('editor').classList.remove('hidden');$('editTitle').textContent=ds+' 근무 기록';
- $('type').value=r?.type||'normal';$('breakMin').value=String(r?.breakMin??60);$('start').value=r?.start||'08:00';$('end').value=r?.end||'17:00';$('night').value=r?.night||0;$('deduct').value=r?.deduct||0;$('memo').value=r?.memo||'';$('deleteBtn').style.visibility=r?'visible':'hidden';preview();$('editor').scrollIntoView({behavior:'smooth'});
+ selected=ds;$('editor').classList.remove('hidden');$('editTitle').textContent=ds+' 근무 기록';
+ renderDetails(find(ds)?.kind||'');
+ $('deleteBtn').style.visibility=find(ds)?'visible':'hidden';
+ $('editor').scrollIntoView({behavior:'smooth',block:'start'});
 }
-function preview(){const r={type:$('type').value,breakMin:+$('breakMin').value,start:$('start').value,end:$('end').value,night:+$('night').value};if(['off','paidOff','absence'].includes(r.type)){$('preview').textContent=$('type').selectedOptions[0].textContent+'로 기록됩니다.';return;}const p=parts(r);$('preview').textContent=r.type==='normal'?`총 ${p.t.toFixed(1)}시간 · 일반 ${p.n.toFixed(1)}시간 · 연장 ${p.o.toFixed(1)}시간`:`총 ${p.t.toFixed(1)}시간 · 특근 ${p.hi.toFixed(1)}시간 · 8시간 초과 ${p.ho.toFixed(1)}시간`;}
-function save(){if(!selected)return;const r={date:selected,type:$('type').value,breakMin:+$('breakMin').value,start:$('start').value,end:$('end').value,night:+$('night').value||0,deduct:+$('deduct').value||0,memo:$('memo').value};records=records.filter(x=>x.date!==selected);records.push(r);records.sort((a,b)=>a.date.localeCompare(b.date));localStorage.setItem(REC,JSON.stringify(records));renderAll();}
-function del(){if(!find(selected))return;records=records.filter(x=>x.date!==selected);localStorage.setItem(REC,JSON.stringify(records));$('editor').classList.add('hidden');selected='';renderAll();}
-
+function saveKind(kind){
+ records=records.filter(r=>r.date!==selected);records.push({date:selected,kind});records.sort((a,b)=>a.date.localeCompare(b.date));
+ localStorage.setItem(REC,JSON.stringify(records));renderDetails(kind);$('deleteBtn').style.visibility='visible';renderAll();
+}
+function renderDetails(kind){
+ if(kind==='normal') $('workDetails').innerHTML='<strong>정상퇴근</strong><span>08:00 ~ 17:00</span><span>휴게시간 1시간</span><span>실근무 8시간</span>';
+ else if(kind==='overtime') $('workDetails').innerHTML='<strong>잔업</strong><span>08:00 ~ 17:00 : 휴게 1시간 → 정상근무 8시간</span><span>17:00 ~ 20:00 : 휴게 30분 → 잔업 2시간 30분</span><span>잔업수당 : 17,550원 × 2.5시간 = 43,875원</span>';
+ else $('workDetails').innerHTML='<strong>근무기록을 선택하세요.</strong><span>정상퇴근 또는 잔업을 누르면 바로 저장됩니다.</span>';
+}
+function remove(){
+ if(!selected)return;records=records.filter(r=>r.date!==selected);localStorage.setItem(REC,JSON.stringify(records));$('editor').classList.add('hidden');selected='';renderAll();
+}
 function calc(){
- let n=0,o=0,hi=0,ho=0,night=0,deduct=0,abs=0;
- records.filter(r=>r.date.startsWith(monthKey())).forEach(r=>{const p=parts(r);n+=p.n;o+=p.o;hi+=p.hi;ho+=p.ho;night+=+r.night||0;deduct+=+r.deduct||0;if(r.type==='absence')abs++;});
- const base=round10(settings.hourly*settings.baseHours),op=round10(settings.hourly*settings.otMult*o),hip=round10(settings.hourly*settings.hInMult*hi),hop=round10(settings.hourly*settings.hOverMult*ho),np=round10(settings.hourly*settings.nightMult*night),att=round10(settings.hourly*deduct+settings.hourly*8*abs);
- const gross=base+op+hip+hop+np-att,care=round10(settings.health*settings.careRate),emp=round10(gross*settings.employmentRate),insurance=round10(settings.pension)+round10(settings.health)+care+emp;
- return{gross,insurance,net:gross-insurance};
+ const monthRecords=records.filter(r=>r.date.startsWith(monthKey()));
+ const normalDays=monthRecords.filter(r=>r.kind==='normal').length;
+ const otDays=monthRecords.filter(r=>r.kind==='overtime').length;
+ const otHours=otDays*settings.otPerDay;
+ const base=round10(settings.normalRate*settings.baseHours);
+ const overtime=round10(settings.otRate*otHours);
+ const gross=base+overtime;
+ const care=round10(settings.health*settings.careRate);
+ const employment=round10(gross*settings.employmentRate);
+ const insurance=round10(settings.pension)+round10(settings.health)+care+employment;
+ return{normalDays,otDays,otHours,base,overtime,gross,insurance,net:gross-insurance};
 }
-function renderPay(){const c=calc();$('salaryTitle').textContent=(view.getMonth()+1)+'월 급여';$('gross').textContent=won(c.gross);$('insurance').textContent='- '+won(c.insurance);$('net').textContent=won(c.net);}
+function renderPay(){
+ const c=calc();$('salaryTitle').textContent=(view.getMonth()+1)+'월 급여';
+ $('basePay').textContent=won(c.base);$('overtimePay').textContent=won(c.overtime);$('grossPay').textContent=won(c.gross);
+ $('insurancePay').textContent='- '+won(c.insurance);$('netPay').textContent=won(c.net);
+ $('normalDays').textContent=c.normalDays+'일';$('otDays').textContent=c.otDays+'일';$('otHours').textContent=c.otHours.toFixed(1)+'시간';
+}
 function renderAll(){renderCalendar();renderPay();}
-
 function loadSettings(){Object.keys(settings).forEach(k=>{if($(k))$(k).value=settings[k]});}
 function saveSettings(){Object.keys(settings).forEach(k=>{if($(k))settings[k]=+$(k).value||0});localStorage.setItem(SET,JSON.stringify(settings));renderPay();}
 
-$('prev').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);renderAll()};
-$('next').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);renderAll()};
+$('normalChoice').onclick=()=>saveKind('normal');$('otChoice').onclick=()=>saveKind('overtime');
+$('deleteBtn').onclick=remove;$('closeBtn').onclick=()=>{$('editor').classList.add('hidden');selected='';renderCalendar()};
+$('prevMonth').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);renderAll()};
+$('nextMonth').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);renderAll()};
+$('prevYear').onclick=()=>{view=new Date(view.getFullYear()-1,view.getMonth(),1);renderAll()};
 $('todayBtn').onclick=()=>{const n=new Date();view=new Date(n.getFullYear(),n.getMonth(),1);renderAll()};
-$('addToday').onclick=()=>{const n=new Date();view=new Date(n.getFullYear(),n.getMonth(),1);renderAll();openEditor(dateKey(n.getFullYear(),n.getMonth(),n.getDate()))};
-$('yearBtn').onclick=()=>{view=new Date(view.getFullYear()-1,view.getMonth(),1);renderAll()};
+$('todayAdd').onclick=()=>{const n=new Date();view=new Date(n.getFullYear(),n.getMonth(),1);renderAll();openEditor(key(n.getFullYear(),n.getMonth(),n.getDate()))};
 $('settingsBtn').onclick=()=>{$('settings').classList.toggle('hidden');if(!$('settings').classList.contains('hidden'))$('settings').scrollIntoView({behavior:'smooth'})};
-$('saveBtn').onclick=save;$('deleteBtn').onclick=del;
-['type','breakMin','start','end','night'].forEach(id=>{$(id).oninput=preview;$(id).onchange=preview});
 Object.keys(settings).forEach(k=>{if($(k))$(k).oninput=saveSettings});
 loadSettings();renderAll();
-
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./service-worker.js').catch(()=>{});}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
 })();
 </script>
 </body>
