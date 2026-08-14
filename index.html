@@ -202,10 +202,58 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
   </section>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-(function(){
+(async function(){
 "use strict";
+
+async function loadExternalScript(url, timeoutMs=5000){
+  return new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    let settled=false;
+    const finish=(err)=>{
+      if(settled)return;
+      settled=true;
+      clearTimeout(timer);
+      if(err){ try{s.remove()}catch(e){}; reject(err); }
+      else resolve();
+    };
+    const timer=setTimeout(()=>finish(new Error('timeout: '+url)),timeoutMs);
+    s.src=url;
+    s.async=true;
+    s.onload=()=>finish();
+    s.onerror=()=>finish(new Error('load error: '+url));
+    document.head.appendChild(s);
+  });
+}
+
+async function ensureSupabaseLibrary(){
+  if(window.supabase?.createClient)return true;
+  const sources=[
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ];
+  for(const url of sources){
+    try{
+      const cover=document.getElementById('loadingCover');
+      if(cover)cover.textContent='근무캘린더 연결 중…';
+      await loadExternalScript(url,5000);
+      if(window.supabase?.createClient)return true;
+    }catch(err){
+      console.warn('Supabase library source failed',err);
+    }
+  }
+  return false;
+}
+
+const libReady=await ensureSupabaseLibrary();
+if(!libReady){
+  const cover=document.getElementById('loadingCover');
+  if(cover){
+    cover.innerHTML='<div style="padding:28px;text-align:center;line-height:1.7"><strong style="font-size:18px">연결 파일을 불러오지 못했어요</strong><br><span style="color:#8e8e93;font-size:13px">인터넷 연결을 확인한 뒤 아래 버튼을 눌러주세요.</span><br><button onclick="location.reload()" style="margin-top:16px;border:0;border-radius:14px;padding:12px 18px;background:#0a84ff;color:#fff;font-weight:800">다시 연결</button></div>';
+  }
+  return;
+}
+
 
 const SUPABASE_URL="https://ehfqpuwyjkglmgcwntbo.supabase.co";
 const SUPABASE_KEY="sb_publishable_vIAGJ3qQ56zQLmxUdj5O0A_wrFYBG-x";
